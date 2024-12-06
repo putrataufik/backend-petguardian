@@ -1,0 +1,4 @@
+# Ignore Firebase service account keys and other secrets
+*.json
+*.key
+*.env
