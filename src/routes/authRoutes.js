@@ -1,15 +1,16 @@
 const express = require("express");
-const { registerWithEmail, loginWithEmail, loginWithToken } = require("../controllers/authController");
+const { registerUser, loginWithToken, loginWithGoogle } = require("../controllers/authController");
 
 const router = express.Router();
 
 // Register new user with Email and Password
-router.post("/register", registerWithEmail);
+router.post("/register", registerUser);
 
 // Login using Firebase ID Token (sent from frontend after successful login)
 router.post("/login", loginWithToken);
 
-// Optionally, add login with email and password as another endpoint if needed
-router.post("/login-with-email", loginWithEmail);
+// Google Login route
+router.post("/login/google", loginWithGoogle);
+
 
 module.exports = router;

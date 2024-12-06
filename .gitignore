@@ -1,4 +1,6 @@
 # Ignore Firebase service account keys and other secrets
-*.json
+petguardian-b4891-firebase-adminsdk-guzhl-fee065d3a7.json
 *.key
 *.env
+
+node_modules/
