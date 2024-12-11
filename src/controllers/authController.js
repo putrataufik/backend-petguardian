@@ -55,6 +55,7 @@ exports.registerUser = async (req, res) => {
     await db.collection("users").doc(userRecord.uid).set({
       name: name,
       email: email,
+      photoURL: userRecord.photoURL || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

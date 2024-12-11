@@ -6,5 +6,5 @@ admin.initializeApp({
   databaseURL: "https://petguardian-b4891.firebaseio.com",
 });
 
-const db = admin.firestore();
-module.exports = { admin, db };
+const db = admin.firestore(); // Menginisialisasi Firestore
+module.exports = { admin, db }; // Ekspor db untuk digunakan di controller
