@@ -1,12 +1,12 @@
 const { admin, db } = require("../config/firebase");
 
-
 /**
  * Login dengan Firebase ID Token yang dikirimkan oleh frontend
  */
+
 exports.loginWithToken = async (req, res) => {
   try {
-    console.log("Request Bodyyy:", req.body); // Tambahkan log untuk memeriksa body jgn lupa hapus
+    
 
     const { idToken } = req.body;
 
@@ -31,7 +31,6 @@ exports.loginWithToken = async (req, res) => {
     res.status(401).json({ error: "Invalid token!" });
   }
 };
-
 
 /**
  * Register User with Email and Password (using Firebase Admin SDK)
@@ -66,10 +65,10 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-
 exports.loginWithGoogle = async (req, res) => {
   try {
     const { idToken } = req.body;
+    console.log(req.body);
 
     if (!idToken) {
       return res.status(400).json({ error: "ID Token is required!" });
@@ -77,8 +76,9 @@ exports.loginWithGoogle = async (req, res) => {
 
     // Verifikasi ID Token dari Google
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const { uid, email, name } = decodedToken;
-
+    
+    const { uid, email, name, picture } = decodedToken;
+    
     // Cek apakah pengguna sudah ada di Firestore
     const userDoc = db.collection("users").doc(uid);
     const userSnapshot = await userDoc.get();
@@ -86,12 +86,13 @@ exports.loginWithGoogle = async (req, res) => {
     if (!userSnapshot.exists) {
       // Jika pengguna belum ada, tambahkan ke Firestore
       await userDoc.set({
-        name: name || "Anonymous",
+        name: name,
         email: email,
+        picture: picture || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
-
+  
     res.status(200).json({
       message: "Login successful!",
       uid,
