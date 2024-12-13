@@ -55,4 +55,27 @@ exports.getPetByOwner = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.getPetByID = async (req, res) => {
+  try {
+    const { petId } = req.params;
+
+    if (!petId) {
+      return res.status(400).json({ error: "Pet ID is required!" });
+    }
+
+    // Query Firestore untuk mendapatkan pet berdasarkan ID
+    const petDoc = await db.collection("pets").doc(petId).get();
+
+    if (!petDoc.exists) {
+      return res.status(404).json({ error: "Pet not found!" });
+    }
+
+    // Return data pet
+    res.status(200).json({ petId: petDoc.id, ...petDoc.data() });
+  } catch (error) {
+    console.error("Error getting pet by ID:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
