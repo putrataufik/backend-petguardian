@@ -32,9 +32,10 @@ const detectAnimalBreed = async (req, res) => {
     const base64Image = Buffer.from(file.buffer).toString("base64");
 
     const prompt = `
-      Gambar yang diunggah adalah seekor anjing atau kucing.
-      Tolong deteksi ras hewan ini berdasarkan gambar dan berikan informasi terkait seperti ciri fisik, perilaku umum, dan perawatan khusus untuk ras tersebut.
-      Jika gambar tidak menunjukkan anjing atau kucing, beri tahu.
+      Jenis ras apa yang dimiliki oleh hewan peliharaan saya serta bagaimana 
+      ciri-ciri yang dimiliki oleh hewan peliharaan tersebut?. 
+      Selain itu juga, bagaimana cara untuk merawat dan memelihara hewan 
+      peliharaan ras tersebut? 
     `;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

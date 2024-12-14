@@ -58,12 +58,21 @@ exports.registerUser = async (req, res) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Tambahkan dokumen kosong di koleksi subscriptions dengan nama doc sesuai uid
+    await db.collection("subscriptions").doc(userRecord.uid).set({
+      status: "pending",
+      subscriptionDate: "",
+      expiryDate: "",
+      isActive: false,
+    });
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     console.error("Error registering user:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 exports.loginWithGoogle = async (req, res) => {
   try {
@@ -76,9 +85,9 @@ exports.loginWithGoogle = async (req, res) => {
 
     // Verifikasi ID Token dari Google
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    
+
     const { uid, email, name, picture } = decodedToken;
-    
+
     // Cek apakah pengguna sudah ada di Firestore
     const userDoc = db.collection("users").doc(uid);
     const userSnapshot = await userDoc.get();
@@ -92,7 +101,21 @@ exports.loginWithGoogle = async (req, res) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
-  
+
+    // Cek dan buat dokumen di koleksi subscriptions
+    const subscriptionDoc = db.collection("subscriptions").doc(uid);
+    const subscriptionSnapshot = await subscriptionDoc.get();
+
+    if (!subscriptionSnapshot.exists) {
+      // Jika dokumen belum ada, tambahkan dokumen baru dengan field kosong
+      await subscriptionDoc.set({
+        status: "pending",
+        subscriptionDate: "",
+        expiryDate: "",
+        isActive: false,
+      });
+    }
+
     res.status(200).json({
       message: "Login successful!",
       uid,
@@ -104,6 +127,7 @@ exports.loginWithGoogle = async (req, res) => {
     res.status(401).json({ error: "Invalid token or failed to save user!" });
   }
 };
+
 
 
 

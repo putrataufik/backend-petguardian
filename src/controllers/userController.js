@@ -82,3 +82,58 @@ exports.addOrUpdateUser = async (req, res) => {
       res.status(500).json({ error: "Gagal menambahkan atau memperbarui user!" });
     }
   };
+
+  exports.getUserSubscriptionsStatusById = async (req, res) => {
+    try {
+      const { uid } = req.params;
+  
+      if (!uid) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+  
+      // Mengambil dokumen dari koleksi subscriptions dengan userID sebagai nama dokumen
+      const docRef = db.collection("subscriptions").doc(uid);
+      const doc = await docRef.get();
+  
+      if (!doc.exists) {
+        return res
+          .status(404)
+          .json({ message: "No subscription found for this user" });
+      }
+  
+      const subscriptionData = doc.data();
+  
+      // Mengecek tanggal expiry
+      const today = new Date();
+      const expiryDate = new Date(subscriptionData.expiryDate);
+  
+      if (expiryDate <= today) {
+        // Jika tanggal hari ini sama atau melebihi tanggal expiry, ubah status menjadi expired
+        await docRef.update({ status: "expired" });
+  
+        return res.status(200).json({
+          userID: uid,
+          status: "expired",
+          isActive: false,
+          subscriptionDate: subscriptionData.subscriptionDate || null,
+          expiryDate: subscriptionData.expiryDate || null,
+        });
+      }
+  
+      // Jika belum expired, tetap tampilkan data asli
+      const isActive = subscriptionData.status === "active";
+  
+      res.status(200).json({
+        userID: uid,
+        status: subscriptionData.status,
+        isActive: isActive,
+        subscriptionDate: subscriptionData.subscriptionDate || null,
+        expiryDate: subscriptionData.expiryDate || null,
+      });
+    } catch (error) {
+      console.error("Error getting subscription status:", error.message);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
+  

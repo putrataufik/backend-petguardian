@@ -1,9 +1,10 @@
 const express = require('express');
-const { addOrUpdateUser, getUserByUid} = require('../controllers/userController');
+const { addOrUpdateUser, getUserByUid, getUserSubscriptionsStatusById} = require('../controllers/userController');
 const router = express.Router();
 
-router.get('/getuserbyuid/:uid', getUserByUid);
 router.post('/updatedata', addOrUpdateUser);
+router.get('/getuserbyuid/:uid', getUserByUid);
+router.get('/subscriptionsstatus/:uid', getUserSubscriptionsStatusById);
 
 
 module.exports = router;
