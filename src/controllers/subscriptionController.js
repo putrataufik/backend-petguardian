@@ -1,13 +1,16 @@
 const snap = require("../config/midtrans");
-
-const { db} = require("../config/firebase");
+const { db } = require("../config/firebase");
 
 const createTransaction = async (req, res) => {
   try {
     console.log(req.body);
-    const { first_name, email } = req.body;
-    if (!first_name || !email) {
-      return res.status(400).json({ message: "Name and email are required"+ first_name + " and " + email});
+    const { first_name, email, user_id } = req.body;
+    if (!first_name || !email || !user_id) {
+      return res
+        .status(400)
+        .json({
+          message: "Name and email are required" + first_name + " and " + email,
+        });
     }
 
     // Membuat detail transaksi
@@ -31,15 +34,16 @@ const createTransaction = async (req, res) => {
     const subscriptionData = {
       orderId: transactionDetails.transaction_details.order_id,
       grossAmount: transactionDetails.transaction_details.gross_amount,
-      status: 'pending', // Status awal sebelum settlement
+      status: "pending", // Status awal sebelum settlement
       paymentToken: transaction.token, // Token transaksi Midtrans
       paymentUrl: transaction.redirect_url, // URL pembayaran
       customerName: transactionDetails.customer_details.first_name,
       customerEmail: transactionDetails.customer_details.email,
+      userID: req.body.user_id,
       createdAt: new Date().toISOString(),
     };
 
-    await db.collection('subscriptions').add(subscriptionData);
+    await db.collection("subscriptions").doc(user_id).set(subscriptionData);
     console.log("Transaction and customer details saved to Firestore");
 
     // Mengembalikan token untuk pembayaran ke klien
@@ -50,39 +54,6 @@ const createTransaction = async (req, res) => {
   }
 };
 
-
-// const saveTransactionToFirestore = async (req, res) => {
-//   try {
-//     const { orderId, name, email, transactionStatus, grossAmount } = req.body;
-
-//     if (!orderId || !name || !email || !transactionStatus || !grossAmount) {
-//       return res.status(400).json({ message: 'All fields are required' });
-//     }
-
-//     console.log('Received transaction data:', req.body);
-//     console.log('Transaction Status:', transactionStatus);
-
-//     subscriptionData = {
-//       orderId,
-//       name,
-//       email,
-//       subscriptionDate: new Date(), // Menambahkan tanggal langganan saat ini
-//       status: 'active',
-//       grossAmount,
-//     }
-//     if (transactionStatus === 'settlement') {
-//       await db.collection('subscriptions').add(subscriptionData);
-//       res.status(200).json({ message: 'Transaction data saved successfully' });
-//     }
-//     else if (transactionStatus === 'pending') {
-//       await db.collection('subscriptions').add(subscriptionData);
-//       res.status(200).json({ message: 'Transaction data saved successfully' });
-//     }
-//   } catch (error) {
-//     console.error("Error saving transaction:", error.message);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// };
 const handleNotification = async (req, res) => {
   try {
     const notification = req.body;
@@ -97,7 +68,9 @@ const handleNotification = async (req, res) => {
 
     // Cari dokumen berdasarkan orderId
     const subscriptionsRef = db.collection("subscriptions");
-    const snapshot = await subscriptionsRef.where("orderId", "==", notification.order_id).get();
+    const snapshot = await subscriptionsRef
+      .where("orderId", "==", notification.order_id)
+      .get();
 
     if (snapshot.empty) {
       // Jika tidak ditemukan, tambahkan data baru
@@ -106,9 +79,18 @@ const handleNotification = async (req, res) => {
         transactionId: notification.transaction_id,
         paymentType: notification.payment_type,
         grossAmount: notification.gross_amount,
-        status: notification.transaction_status === "settlement" ? "active" : "pending",
-        subscriptionDate: notification.transaction_status === "settlement" ? subscriptionDate : null,
-        expiryDate: notification.transaction_status === "settlement" ? formattedExpiryDate : null,
+        status:
+          notification.transaction_status === "settlement"
+            ? "active"
+            : "pending",
+        subscriptionDate:
+          notification.transaction_status === "settlement"
+            ? subscriptionDate
+            : null,
+        expiryDate:
+          notification.transaction_status === "settlement"
+            ? formattedExpiryDate
+            : null,
         customerName: notification.customer_details?.first_name || "Unknown",
         customerEmail: notification.customer_details?.email || "Unknown",
       });
@@ -120,11 +102,22 @@ const handleNotification = async (req, res) => {
           transactionId: notification.transaction_id,
           paymentType: notification.payment_type,
           grossAmount: notification.gross_amount,
-          status: notification.transaction_status === "settlement" ? "active" : "pending",
-          subscriptionDate: notification.transaction_status === "settlement" ? subscriptionDate : null,
-          expiryDate: notification.transaction_status === "settlement" ? formattedExpiryDate : null,
+          status:
+            notification.transaction_status === "settlement"
+              ? "active"
+              : "pending",
+          subscriptionDate:
+            notification.transaction_status === "settlement"
+              ? subscriptionDate
+              : null,
+          expiryDate:
+            notification.transaction_status === "settlement"
+              ? formattedExpiryDate
+              : null,
         });
-        console.log(`Transaction with orderId ${notification.order_id} updated in Firestore`);
+        console.log(
+          `Transaction with orderId ${notification.order_id} updated in Firestore`
+        );
       });
     }
 
@@ -135,10 +128,4 @@ const handleNotification = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-module.exports = { createTransaction , handleNotification};
+module.exports = { createTransaction, handleNotification };

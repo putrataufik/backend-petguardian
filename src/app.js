@@ -19,7 +19,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",  // Frontend pada port 5173
-    "https://12d2-125-166-19-86.ngrok-free.app",  // Jika menggunakan ngrok
+    "https://2e93-36-79-134-175.ngrok-free.app",  // Jika menggunakan ngrok
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Metode HTTP yang diizinkan
   allowedHeaders: "Content-Type,Authorization",  // Header yang diizinkan
