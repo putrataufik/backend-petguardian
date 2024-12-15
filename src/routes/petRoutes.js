@@ -1,12 +1,12 @@
 const express = require("express");
-const { addPet, getPetByOwner, getPetByID } = require("../controllers/petController");
+const { addPet, getPetByUid, getPetByID } = require("../controllers/petController");
 
 const router = express.Router();
 
 router.post("/add", addPet);
 
 // Route untuk mengambil semua pet berdasarkan owner
-router.get("/owner/:owner", getPetByOwner);
+router.get("/owner/:uid", getPetByUid);
 
 // Route untuk mendapatkan pet berdasarkan ID
 router.get('/petdetails/:petId', getPetByID);

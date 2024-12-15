@@ -1,8 +1,8 @@
 const express = require('express');
-const { addOrUpdateUser, getUserByUid, getUserSubscriptionsStatusById} = require('../controllers/userController');
+const { updateUser, getUserByUid, getUserSubscriptionsStatusById} = require('../controllers/userController');
 const router = express.Router();
 
-router.post('/updatedata', addOrUpdateUser);
+router.post('/updatedata/:uid', updateUser);
 router.get('/getuserbyuid/:uid', getUserByUid);
 router.get('/subscriptionsstatus/:uid', getUserSubscriptionsStatusById);
 
