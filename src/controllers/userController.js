@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, admin } = require("../config/firebase");
 
 /**
  * Get User by Email
@@ -42,46 +42,48 @@ exports.getUserByUid = async (req, res) => {
  * Tambah atau Update Data Pengguna
  */
 
-exports.addOrUpdateUser = async (req, res) => {
-    try {
-      const { uid, name, email, picture } = req.body;
-  
-      if (!uid || !name || !email) {
-        return res.status(400).json({ error: "UID, name, dan email wajib diisi!" });
-      }
-  
-      // Referensi dokumen pengguna berdasarkan UID
-      const userDoc = db.collection("users").doc(uid);
-  
-      // Cek apakah pengguna sudah ada di Firestore
-      const userSnapshot = await userDoc.get();
-  
-      if (userSnapshot.exists) {
-        // Jika pengguna sudah ada, lakukan update
-        await userDoc.update({
-          name,
-          email,
-          picture: picture || null, // Jika photoURL tidak ada, gunakan null
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-  
-        res.status(200).json({ message: "User berhasil diperbarui!" });
-      } else {
-        // Jika pengguna belum ada, tambahkan data baru
-        await userDoc.set({
-          name,
-          email,
-          picture: picture || null,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-  
-        res.status(201).json({ message: "User berhasil ditambahkan!" });
-      }
-    } catch (error) {
-      console.error("Error menambahkan/memperbarui user:", error.message);
-      res.status(500).json({ error: "Gagal menambahkan atau memperbarui user!" });
+exports.updateUser = async (req, res) => {
+  try {
+    const { uid } = req.params; // Mengambil uid dari parameter URL
+    const { name, email, picture } = req.body;
+
+    console.log("Data diterima:", { uid, name, email, picture });
+
+    if (!uid || !name || !email) {
+      return res.status(400).json({ error: "UID, name, dan email wajib diisi!" });
     }
-  };
+
+    // Referensi dokumen pengguna berdasarkan UID
+    const userDoc = db.collection("users").doc(uid);
+    console.log("Merefensikan dokumen pengguna:", uid);
+
+    // Cek apakah pengguna sudah ada di Firestore
+    const userSnapshot = await userDoc.get();
+    console.log("Snapshot pengguna:", userSnapshot.exists);
+
+    if (userSnapshot.exists) {
+      // Jika pengguna sudah ada, lakukan update
+      await userDoc.update({
+        name,
+        email,
+        picture: picture || null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log("User diperbarui:", uid);
+
+      res.status(200).json({ message: "User berhasil diperbarui!" });
+    } else {
+      // Jika pengguna tidak ditemukan, beri respons error
+      return res.status(404).json({ error: "Pengguna tidak ditemukan!" });
+    }
+  } catch (error) {
+    console.error("Error memperbarui user:", error.message);
+    res.status(500).json({ error: "Gagal memperbarui user!" });
+  }
+};
+
+
+
 
   exports.getUserSubscriptionsStatusById = async (req, res) => {
     try {

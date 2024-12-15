@@ -3,14 +3,14 @@ const { db, admin } = require("../config/firebase");
 // Add pet data
 exports.addPet = async (req, res) => {
   try {
-    const { owner, name, species, breed, age, } = req.body;
+    const { uid, name, species, breed, age } = req.body;
 
-    if (!owner || !name || !species || !breed || !age) {
+    if (!uid || !name || !species || !breed || !age) {
       return res.status(400).json({ error: "All fields are required!" });
     }
 
     const petData = {
-      owner,
+      uid, // Use uid instead of owner
       name,
       species,
       breed,
@@ -21,37 +21,42 @@ exports.addPet = async (req, res) => {
     // Add pet to Firestore
     const petRef = await db.collection("pets").add(petData);
 
-    res.status(201).json({ message: "Pet added successfully!", petId: petRef.id });
+    res
+      .status(201)
+      .json({ message: "Pet added successfully!", petId: petRef.id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 // Get all pets by owner
-exports.getPetByOwner = async (req, res) => {
+exports.getPetByUid = async (req, res) => {
   try {
-    const { owner } = req.params;
+    const { uid } = req.params; // Replace 'owner' with 'uid'
 
-    if (!owner) {
-      return res.status(400).json({ error: "Owner ID is required!" });
+    if (!uid) {
+      return res.status(400).json({ error: "Pet UID is required!" });
     }
 
-    // Query Firestore untuk mendapatkan semua pet milik owner tertentu
-    const petsSnapshot = await db.collection("pets").where("owner", "==", owner).get();
+    // Query Firestore for pets with the specified UID
+    const petsSnapshot = await db
+      .collection("pets")
+      .where("uid", "==", uid)
+      .get();
 
     if (petsSnapshot.empty) {
-      return res.status(404).json({ error: "No pets found for this owner!" });
+      // Use 404 for not found
+      return res.status(404).json({ error: "No pets found with this UID!" });
     }
 
-    // Loop melalui semua dokumen dan buat array data
+    // Process data from all documents found
     const pets = [];
     petsSnapshot.forEach((doc) => {
       pets.push({ petId: doc.id, ...doc.data() });
     });
 
-    // Return daftar pets
     res.status(200).json({ pets });
   } catch (error) {
-    console.error("Error getting pets by owner:", error.message);
+    console.error("Error getting pet by UID:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -77,5 +82,3 @@ exports.getPetByID = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
