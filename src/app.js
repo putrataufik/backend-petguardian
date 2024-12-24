@@ -12,6 +12,8 @@ const userRoutes = require('./routes/userRoutes');
 const geminiAiRoutes = require('./routes/geminiAiRoutes.js');
 const catSkinDisease = require('./routes/catSkinDiseaseRoutes.js');
 const dogSkinDisease = require('./routes/dogSkinDiseaseRoutes.js');
+const scheduleRoutes = require('./routes/scheduleRoutes');
+const imageRoutes = require('./routes/imageRoutes.js');
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/gemini', geminiAiRoutes);
 app.use('/api/catskindisease', catSkinDisease);
 app.use('/api/dogSkinDisease', dogSkinDisease);
+app.use('/api/images', imageRoutes);
+app.use('/api/schedules', scheduleRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
