@@ -32,27 +32,36 @@ exports.addScheduleByUid = async (req, res) => {
 };
 
 exports.getScheduleByUid = async (req, res) => {
-    try {
-        const uid = req.params.uid; // ambil uid dari parameter URL
-        //cek apakah uid ada
-        if (!uid) {
-            return res.status(400).json({ error: "UID is required!" });
-        }
-        //query firestore untuk mendapatkan data schedule berdasarkan uid
-        const scheduleQuery = await db.collection("schedule").where("uid", "==", uid).get();
-        if (scheduleQuery.empty) {
-            return res.status(404).json({ error: "No schedule found with this UID!" });
-        }
-        //proses data dari semua dokumen yang ditemukan
-        const schedule = [];
-        scheduleQuery.forEach((doc) => {
-            schedule.push({ scheduleID: doc.id, ...doc.data() });
-        });
-        res.status(200).json({ schedule });
-    }catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-}
+  try {
+      const uid = req.params.uid; // ambil uid dari parameter URL
+      //cek apakah uid ada
+      if (!uid) {
+          return res.status(400).json({ error: "UID is required!" });
+      }
+      //query firestore untuk mendapatkan data schedule berdasarkan uid
+      const scheduleQuery = await db.collection("schedule").where("uid", "==", uid).get();
+      if (scheduleQuery.empty) {
+          return res.status(404).json({ error: "No schedule found with this UID!" });
+      }
+      //proses data dari semua dokumen yang ditemukan
+      const schedule = [];
+      scheduleQuery.forEach((doc) => {
+          schedule.push({ scheduleID: doc.id, ...doc.data() });
+      });
+
+      // Urutkan data berdasarkan date dan time
+      schedule.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.time}`);
+          const dateB = new Date(`${b.date}T${b.time}`);
+          return dateA - dateB; // Urutan dari yang paling dekat
+      });
+
+      res.status(200).json({ schedule });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
 
 exports.updateScheduleById = async (req, res) => {
     try {

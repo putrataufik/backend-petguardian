@@ -10,7 +10,7 @@ router.post("/register", registerUser);
 router.post("/login", loginWithToken);
 
 // Google Login route
-router.post("/login/google", loginWithGoogle);
+router.post("/google", loginWithGoogle);
 
 
 module.exports = router;
