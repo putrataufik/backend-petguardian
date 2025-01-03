@@ -11,6 +11,6 @@ router.get("/owner/:uid", getPetByUid);
 // Route untuk mendapatkan pet berdasarkan ID
 router.get('/petdetails/:petId', getPetByID);
 
-router.get('/petdetails/:petID', deletePet);
+router.delete('/deletePet/:petId', deletePet);
 
 module.exports = router;
