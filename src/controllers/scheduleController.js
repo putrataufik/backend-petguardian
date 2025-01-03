@@ -102,4 +102,28 @@ exports.updateScheduleById = async (req, res) => {
     }
   };
   
+  exports.deleteScheduleById = async (req, res) => {
+    try {
+      const { scheduleId } = req.params;
+  
+      if (!scheduleId) {
+        return res.status(400).json({ error: "Schedule ID is required!" });
+      }
+  
+      db.collection("schedule")
+        .doc(scheduleId)
+        .delete()
+        .then(() => {
+          res.status(200).json({ message: "Schedule deleted successfully!" });
+        })
+        .catch((error) => {
+          console.error("Error deleting schedule:", error.message);
+          res.status(500).json({ error: error.message });
+        });
+    } catch (error) {
+      console.error("Error deleting schedule:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  }
+  
   

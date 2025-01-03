@@ -82,3 +82,22 @@ exports.getPetByID = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.deletePet = function (req, res) {
+  const { petId } = req.params;
+
+  if (!petId) {
+    return res.status(400).json({ error: "Pet ID is required!" });
+  }
+
+  db.collection("pets")
+    .doc(petId)
+    .delete()
+    .then(() => {
+      res.status(200).json({ message: "Pet deleted successfully!" });
+    })
+    .catch((error) => {
+      console.error("Error deleting pet:", error.message);
+      res.status(500).json({ error: error.message });
+    });
+}
