@@ -47,6 +47,7 @@ const detectDogSkinDisease = async (req, res) => {
       message: "Penyakit kulit Anjing terdeteksi!",
       response: response.data,
     });
+    console.log(response.data)
   } catch (error) {
     console.error("Error detecting Dog skin disease:", error.message);
     res.status(500).json({ error: "Gagal memproses gambar!" });

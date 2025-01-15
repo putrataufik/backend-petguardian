@@ -5,11 +5,12 @@ const createTransaction = async (req, res) => {
   try {
     console.log(req.body);
     const { first_name, email, user_id } = req.body;
-    if (!first_name || !email || !user_id) {
+    
+    if (!first_name || !email) {
       return res
         .status(400)
         .json({
-          message: "Name and email are required" + first_name + " and " + email,
+          message: "Name and email are required" + first_name + " and " + email + user_id,
         });
     }
 
@@ -35,6 +36,7 @@ const createTransaction = async (req, res) => {
       orderId: transactionDetails.transaction_details.order_id,
       grossAmount: transactionDetails.transaction_details.gross_amount,
       status: "pending", // Status awal sebelum settlement
+      isActive: false, // Status aktif setelah settlement
       paymentToken: transaction.token, // Token transaksi Midtrans
       paymentUrl: transaction.redirect_url, // URL pembayaran
       customerName: transactionDetails.customer_details.first_name,
@@ -79,6 +81,7 @@ const handleNotification = async (req, res) => {
         transactionId: notification.transaction_id,
         paymentType: notification.payment_type,
         grossAmount: notification.gross_amount,
+        isActive: notification.transaction_status === "settlement",
         status:
           notification.transaction_status === "settlement"
             ? "active"

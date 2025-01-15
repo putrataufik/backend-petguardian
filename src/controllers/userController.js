@@ -74,57 +74,141 @@ exports.updateUserByUid = async (req, res) => {
 
 
 
-  exports.getUserSubscriptionsStatusById = async (req, res) => {
-    try {
-      const { uid } = req.params;
-  
-      if (!uid) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-  
-      // Mengambil dokumen dari koleksi subscriptions dengan userID sebagai nama dokumen
-      const docRef = db.collection("subscriptions").doc(uid);
-      const doc = await docRef.get();
-  
-      if (!doc.exists) {
-        return res
-          .status(404)
-          .json({ message: "No subscription found for this user" });
-      }
-  
-      const subscriptionData = doc.data();
-  
-      // Mengecek tanggal expiry
-      const today = new Date();
-      const expiryDate = new Date(subscriptionData.expiryDate);
-  
-      if (expiryDate <= today) {
-        // Jika tanggal hari ini sama atau melebihi tanggal expiry, ubah status menjadi expired
-        await docRef.update({ status: "expired" });
-  
-        return res.status(200).json({
-          userID: uid,
-          status: "expired",
-          isActive: false,
-          subscriptionDate: subscriptionData.subscriptionDate || null,
-          expiryDate: subscriptionData.expiryDate || null,
-        });
-      }
-  
-      // Jika belum expired, tetap tampilkan data asli
-      const isActive = subscriptionData.status === "active";
-  
-      res.status(200).json({
+exports.getUserSubscriptionsStatusById = async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    if (!uid) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Mengambil dokumen dari koleksi subscriptions dengan userID sebagai nama dokumen
+    const docRef = db.collection("subscriptions").doc(uid);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: "No subscription found for this user" });
+    }
+
+    const subscriptionData = doc.data();
+
+    // Mengecek tanggal expiry
+    const today = new Date();
+    const expiryDate = new Date(subscriptionData.expiryDate);
+
+    // Reset usageToken jika sudah expired atau reset waktu harian
+    const currentDate = new Date();
+    const lastResetDate = subscriptionData.lastResetDate ? new Date(subscriptionData.lastResetDate) : null;
+    const resetTime = new Date(currentDate.setHours(0, 0, 0, 0)); // 00:00 UTC+7 reset
+
+    // Memeriksa apakah waktu reset sudah lewat
+    if (!lastResetDate || resetTime > lastResetDate) {
+      // Jika belum ada reset atau sudah lewat waktu reset, reset token
+      const usageToken = subscriptionData.status === "active" ? 600 : 100;
+      await docRef.update({
+        usageToken: usageToken,
+        lastResetDate: resetTime,
+      });
+    }
+
+    if (expiryDate <= today) {
+      // Jika tanggal hari ini sama atau melebihi tanggal expiry, ubah status menjadi expired
+      await docRef.update({ status: "expired", usageToken: 0 });
+
+      return res.status(200).json({
         userID: uid,
-        status: subscriptionData.status,
-        isActive: isActive,
+        status: "expired",
+        isActive: false,
         subscriptionDate: subscriptionData.subscriptionDate || null,
         expiryDate: subscriptionData.expiryDate || null,
+        usageToken: 0,
       });
-    } catch (error) {
-      console.error("Error getting subscription status:", error.message);
-      res.status(500).json({ message: "Internal server error" });
     }
-  };
+
+    // Jika belum expired, tetap tampilkan data asli
+    const isActive = subscriptionData.status === "active";
+    const usageToken = subscriptionData.usageToken || (isActive ? 600 : 100);
+
+    res.status(200).json({
+      userID: uid,
+      status: subscriptionData.status,
+      isActive: isActive,
+      subscriptionDate: subscriptionData.subscriptionDate || null,
+      expiryDate: subscriptionData.expiryDate || null,
+      usageToken: usageToken,
+    });
+  } catch (error) {
+    console.error("Error getting subscription status:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.updateUsageTokenByUid = async (req, res) => {
+  try {
+    const { uid } = req.params; // Mengambil UID dari params URL
+    const { usageToken } = req.body; // Mengambil usageToken dari body request
+
+    if (!uid || typeof usageToken !== 'number') {
+      return res.status(400).json({ message: "User ID and usageToken are required" });
+    }
+
+    // Mengambil dokumen dari koleksi subscriptions dengan userID sebagai nama dokumen
+    const docRef = db.collection("subscriptions").doc(uid);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: "Subscription not found for this user" });
+    }
+
+    const subscriptionData = doc.data();
+
+    // Perbarui usageToken sesuai dengan nilai yang diterima dari frontend
+    await docRef.update({
+      usageToken: usageToken, // Menggunakan nilai usageToken yang dikirim dari frontend
+      lastResetDate: new Date().setHours(0, 0, 0, 0), // Reset waktu harian
+    });
+
+    return res.status(200).json({
+      message: "Usage token updated successfully",
+      usageToken: usageToken, // Mengirimkan nilai token yang baru
+    });
+  } catch (error) {
+    console.error("Error updating usage token:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+exports.getUsageTokenByUid = async (req, res) => {
+  try {
+    const { uid } = req.params; // Mengambil UID dari params URL
+
+    if (!uid) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Mengambil dokumen dari koleksi subscriptions dengan userID sebagai nama dokumen
+    const docRef = db.collection("subscriptions").doc(uid);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: "Subscription not found for this user" });
+    }
+
+    const subscriptionData = doc.data();
+    
+    // Mengambil token sesuai dengan status
+    const usageToken = subscriptionData.usageToken || (subscriptionData.status === "active" ? 600 : 100);
+
+    return res.status(200).json({
+      usageToken: usageToken,
+      status: subscriptionData.status,
+    });
+  } catch (error) {
+    console.error("Error getting usage token:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
   
   

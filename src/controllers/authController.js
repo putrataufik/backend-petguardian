@@ -116,6 +116,38 @@ exports.loginWithGoogle = async (req, res) => {
       });
     }
 
+    // // cek dan buat dokumen di koleksi pets
+    // const petDoc = db.collection("pets").doc(uid);
+    // const petSnapshot = await petDoc.get();
+
+    // if (!petSnapshot.exists) {
+    //   // Jika dokumen belum ada, tambahkan dokumen baru dengan field kosong
+    //   await petDoc.set({
+    //     uid: uid,
+    //     name: "",
+    //     species: "",
+    //     breed: "",
+    //     age:null,
+    //     createdAt: new Date().toISOString(),
+    //   });
+    // }
+
+    // // cek dan buat dokumen di koleksi schedules
+    // const scheduleDoc = db.collection("schedules").doc(uid);
+    // const scheduleSnapshot = await scheduleDoc.get();
+    // if (!scheduleSnapshot.exists) {
+    //   // Jika dokumen belum ada, tambahkan dokumen baru dengan
+    //   await scheduleDoc.set({
+    //     uid: uid,
+    //     event:"",
+    //     location: "",
+    //     time:"",
+    //     date:"",
+    //     note:"",
+    //   createdAt: new Date().toISOString(),
+    //   })
+    // }
+
     res.status(200).json({
       message: "Login successful!",
       uid,
