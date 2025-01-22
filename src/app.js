@@ -24,8 +24,7 @@ app.use(cors({
     "http://localhost:5173",
     "http://localhost:3000",  // Frontend pada port 5173
     "https://dcab-125-166-18-150.ngrok-free.app",
-    "http://192.168.1.11:5173",
-    "http://192.168.1.11:3000"  // Jika menggunakan ngrok
+    "http://172.20.10.3:5173/"
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],  // Menambahkan PATCH
   allowedHeaders: "Content-Type,Authorization",  // Header yang diizinkan
@@ -34,7 +33,7 @@ app.use(cors({
 
 
 // Menggunakan middleware untuk membaca body dari request dan error handler
-app.use(express.json());
+app.use(express.json());  
 app.use(errorHandler);
 
 // Routes

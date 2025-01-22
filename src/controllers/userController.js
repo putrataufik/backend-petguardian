@@ -1,5 +1,7 @@
 const { db } = require("../config/firebase");
-
+const cloudinary = require("../config/cloudinary");
+const multer = require("multer");
+const path = require("path");
 /**
  * Get User by Email
  */
@@ -41,15 +43,22 @@ exports.getUserByUid = async (req, res) => {
 /**
  * Tambah atau Update Data Pengguna
  */
+const storage = multer.diskStorage({
+  destination: "uploads/", // Direktori sementara untuk menyimpan file sebelum diunggah ke Cloudinary
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nama unik untuk setiap file
+  },
+});
+const upload = multer({ storage });
 
 exports.updateUserByUid = async (req, res) => {
   try {
-    const { uid } = req.params; // Mengambil uid dari parameter URL
+    const { uid } = req.params; // Mengambil UID dari parameter URL
     const { name } = req.body; // Mengambil name dari body request
 
     // Validasi input
-    if (!uid || !name) {
-      return res.status(400).json({ error: "UID dan Name harus diisi!" });
+    if (!uid || (!name && !req.file)) {
+      return res.status(400).json({ error: "UID, Name, atau Gambar harus diisi!" });
     }
 
     // Referensi dokumen pengguna berdasarkan UID
@@ -58,15 +67,34 @@ exports.updateUserByUid = async (req, res) => {
     // Cek apakah pengguna sudah ada di Firestore
     const userSnapshot = await userDoc.get();
 
-    if (userSnapshot.exists) {
-      // Jika pengguna ditemukan, update namanya
-      await userDoc.update({ name });
-      res.status(200).json({ message: "User berhasil diperbarui!" });
-    } else {
-      // Jika pengguna tidak ditemukan, beri respons error
+    if (!userSnapshot.exists) {
       return res.status(404).json({ error: "Maaf Pengguna tidak ditemukan!" });
     }
+
+    const updateData = {};
+
+    // Update name jika ada di body request
+    if (name) {
+      updateData.name = name;
+    }
+
+    // Jika ada file gambar, upload ke Cloudinary
+    if (req.file) {
+      const filePath = req.file.path;
+
+      const result = await cloudinary.uploader.upload(filePath, {
+        folder: "petGuardian/users", // Lokasi folder di Cloudinary
+      });
+
+      updateData.photoURL = result.secure_url; // URL gambar yang diunggah
+    }
+
+    // Update data pengguna di Firestore
+    await userDoc.update(updateData);
+
+    res.status(200).json({ message: "User berhasil diperbarui!", data: updateData });
   } catch (error) {
+    console.error("Gagal memperbarui user:", error);
     res.status(500).json({ error: `Gagal memperbarui user: ${error.message}` });
   }
 };
@@ -211,4 +239,4 @@ exports.getUsageTokenByUid = async (req, res) => {
 };
 
   
-  
+exports.uploadMiddleware = upload.single("image");

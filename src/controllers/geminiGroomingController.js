@@ -1,78 +1,39 @@
-const multer = require("multer");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Konfigurasi multer untuk unggahan file
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Middleware untuk menangani unggahan gambar
-const uploadMiddleware = upload.single("image");
-
-// Fungsi untuk Generate Image Grooming
 const grooming = async (req, res) => {
-  try {
-    const file = req.file;
+    const { species, breed, grooming } = req.body;
 
-    // Validasi keberadaan file gambar
-    if (!file) {
-      return res.status(400).json({ error: "File gambar diperlukan!" });
+    if (!species || !breed || !grooming) {
+        return res.status(400).json({ error: "Species, breed, and grooming are required" });
     }
 
-    // Validasi tipe file
-    const allowedMimeTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/bmp",
-      "image/tiff",
-    ];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      return res.status(400).json({ error: "Tipe file tidak didukung!" });
+    try {
+        // Inisialisasi Google Generative AI
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        // Buat prompt berdasarkan data yang diterima
+        const prompt = `Generate a list of 5 URLs for images of grooming styles for a pet with the following characteristics:
+        
+        - Species: ${species}
+        - Breed: ${breed}
+        - Grooming Style: ${grooming}
+
+        Each image should correspond to the grooming style mentioned, and the URL should point to an image that best represents the grooming style for the specified pet species and breed. The URLs should be direct links to the images, such as URLs from reputable image hosting platforms. Do not include non-image links.`;
+
+        // Generate konten menggunakan AI
+        const result = await model.generateContent(prompt);
+        const generatedText = result.response.text();
+
+        // Parse hasil gambar (daftar URL gambar)
+        const imageUrls = generatedText.split('\n').map(url => url.trim()).filter(url => url.startsWith("http"));
+        
+        // Kirimkan hasil gambar ke frontend
+        res.status(200).json({ generatedText });
+    } catch (error) {
+        console.error("Error generating content:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-
-    // Konversi gambar ke Base64
-    const base64Image = Buffer.from(file.buffer).toString("base64");
-
-    // Validasi parameter input
-    const { jenisHewan, jenisModel } = req.body;
-    if (!jenisHewan || !jenisModel) {
-      return res.status(400).json({
-        error: "Parameter jenisHewan dan jenisModel harus diisi!",
-      });
-    }
-
-    // Prompt untuk Generative AI
-    const prompt = `Generate an image of a ${jenisHewan} that has been groomed in the style of ${jenisModel}.`;
-
-    // Inisialisasi Google Generative AI Gemini
-    const genAI = new GoogleGenerativeAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
-
-    const model = genAI.getGenerativeModel({
-      model: "models/gemini-1.5-pro",
-    });
-
-    // Mengirimkan permintaan ke Gemini untuk menghasilkan gambar
-    const result = await model.generateContent({
-      prompt, // Prompt deskriptif
-      input: {
-        image: {
-          data: base64Image, // Gambar dalam bentuk Base64
-          mimeType: file.mimetype, // Tipe MIME gambar
-        },
-      },
-    });
-
-    // Mengembalikan respons hasil dari Gemini
-    res.status(200).json({
-      message: "Gambar berhasil dihasilkan!",
-      response: result,
-    });
-  } catch (error) {
-    console.error("Error Generating Image:", error.message);
-    res.status(500).json({ error: "Terjadi kesalahan saat memproses gambar!" });
-  }
 };
 
-module.exports = { uploadMiddleware, grooming };
+module.exports = { grooming };

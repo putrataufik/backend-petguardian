@@ -1,9 +1,10 @@
 const express = require("express");
-const { addPet, getPetByUid, getPetByID, deletePet } = require("../controllers/petController");
+const { addPet, getPetByUid, getPetByID, deletePet, updatePetById, uploadMiddleware } = require("../controllers/petController");
 
 const router = express.Router();
 
-router.post("/add", addPet);
+router.post("/add", uploadMiddleware, addPet);
+
 
 // Route untuk mengambil semua pet berdasarkan owner
 router.get("/owner/:uid", getPetByUid);
@@ -13,4 +14,5 @@ router.get('/petdetails/:petId', getPetByID);
 
 router.delete('/deletePet/:petId', deletePet);
 
+router.post("/updatePet/:petId", updatePetById);
 module.exports = router;

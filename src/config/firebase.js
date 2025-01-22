@@ -7,4 +7,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore(); // Menginisialisasi Firestore
+db.settings({
+  ignoreUndefinedProperties: true, // Mengabaikan nilai undefined secara otomatis
+});
 module.exports = { admin, db }; // Ekspor db untuk digunakan di controller
