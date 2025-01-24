@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");  // Mengimpor CORS
 const dotenv = require("dotenv");
 const errorHandler = require("./middlewares/errorHandler");
+
+const bodyParser = require("body-parser");
 dotenv.config();  // Memuat variabel lingkungan dari .env
 
 // Import routes 
@@ -19,18 +21,16 @@ const grooming=require('./routes/geminiGroomingRoutes.js');
 const app = express();
 
 // Menggunakan middleware CORS
+// Middleware
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "http://localhost:3000",  // Frontend pada port 5173
-    "https://dcab-125-166-18-150.ngrok-free.app",
-    "http://172.20.10.3:5173/"
+    "http://192.168.56.1:5173",
+    "https://e1d5-182-1-177-109.ngrok-free.app",
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],  // Menambahkan PATCH
-  allowedHeaders: "Content-Type,Authorization",  // Header yang diizinkan
-  credentials: true,  // Jika menggunakan cookies atau autentikasi
+  credentials: true,
 }));
-
+app.use(bodyParser.json());
 
 // Menggunakan middleware untuk membaca body dari request dan error handler
 app.use(express.json());  
